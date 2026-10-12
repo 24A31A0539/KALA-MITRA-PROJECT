@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # KALA-MITRA 🎨🤝
 
 > **Empowering Indian Artisans through AI-Powered Vision Cataloging, Demand-Driven Artisan Clustering, and Transparent Market Access.**
@@ -355,13 +354,5 @@ KALA-MITRA is engineered to ensure **zero crashes** when hardware-accelerated mo
 - Ensure all sensitive variables (API tokens, SMTP passwords, Twilio credentials) are kept strictly inside `.env`.
 - Do not commit `.env` to public repositories. Use `.env.example` as a template.
 - If testing email or SMS OTP delivery, use dedicated development credentials and app passwords.
-
----
-
-## 📄 License
-
-This repository is currently private / proprietary for academic, hackathon, and evaluation review. For permissions, please contact the repository owner.
-=======
-# KALA-MITRA-PROJECT
-KALA-MITRA is an AI-assisted artisan marketplace prototype built with Python, FastAPI, and JavaScript. It supports product discovery, AI-assisted catalog generation, artisan capacity management, bulk-order coordination, order management, and production tracking through modular backend services and APIs.
->>>>>>> 6a2ea522614d5dcad55bedd2a9deb95c9dce874f
+REPO OWNER:yarramsettijalaganika@gmail.com
+LINKEDIN:https://www.linkedin.com/in/jalaganika-yarramsetti-ba506632b
