@@ -1,0 +1,91 @@
+# ==============================================================================
+# KALA-MITRA ROOT .gitignore
+# Excludes development artifacts, local virtual environments, secrets, caches,
+# and operating system artifacts while preserving assets, configs, and datasets.
+# ==============================================================================
+
+# Node / Frontend dependencies & build outputs
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Python bytecode, compilation, and cache
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+**/venv/
+.venv/
+**/.venv/
+env/
+**/env/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing & Coverage caches
+.pytest_cache/
+**/.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+
+# Environment variables & secrets (CRITICAL: Never commit real credentials)
+.env
+**/.env
+.env.local
+.env.*.local
+*.env
+
+# VS Code & IDE settings (preserve team launch configs if explicitly needed, ignore local state)
+.vscode/*
+!.vscode/launch.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+.project
+.pydevproject
+
+# Operating System temporary files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Log files
+*.log
+logs/
+**/logs/

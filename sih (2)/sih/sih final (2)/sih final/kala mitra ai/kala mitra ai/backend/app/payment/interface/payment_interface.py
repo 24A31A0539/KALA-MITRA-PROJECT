@@ -1,0 +1,210 @@
+"""
+================================================================================
+KALA-MITRA PAYMENT MODULE — GATEWAY SERVICE CONTRACT
+================================================================================
+File: payment/interface/payment_interface.py
+Description:
+    Abstract Base Class (ABC) and normalized result dataclasses defining the
+    integration contract for payment gateway adapters.
+    
+    All gateway adapters (e.g. Razorpay, Mock, Stripe) MUST implement
+    `IPaymentGatewayService`. The core KALA-MITRA order system interacts ONLY
+    with this interface, ensuring complete decoupling from specific gateways.
+================================================================================
+"""
+from abc import ABC, abstractmethod
+from decimal import Decimal
+from typing import Dict, Any, Optional
+from dataclasses import dataclass, field
+from enum import Enum
+
+
+class PaymentStatus(str, Enum):
+    """Financial settlement status of the transaction."""
+    PENDING = "PENDING"
+    AUTHORIZED = "AUTHORIZED"
+    PAID = "PAID"
+    FAILED = "FAILED"
+    REFUNDED = "REFUNDED"
+    CANCELLED = "CANCELLED"
+
+
+class PaymentProvider(str, Enum):
+    """Supported Payment Gateway Providers."""
+    MOCK = "MOCK"
+    RAZORPAY = "RAZORPAY"
+    STRIPE = "STRIPE"
+    CASHFREE = "CASHFREE"
+
+
+@dataclass
+class GatewayOrderResult:
+    """Result returned by the gateway when initiating a payment order."""
+    payment_order_id: str
+    amount: Decimal
+    currency: str
+    provider: PaymentProvider
+    public_key: Optional[str] = None
+    checkout_payload: Dict[str, Any] = field(default_factory=dict)
+    raw_response: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class GatewayVerifyResult:
+    """Result returned by signature / payment verification."""
+    is_valid: bool
+    payment_transaction_id: str
+    payment_status: PaymentStatus
+    error_code: Optional[str] = None
+    error_description: Optional[str] = None
+    raw_response: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class GatewayWebhookResult:
+    """Result returned after parsing and authenticating an inbound webhook."""
+    is_authentic: bool
+    event_id: str
+    event_type: str
+    order_id: Optional[str]
+    payment_order_id: Optional[str]
+    payment_transaction_id: Optional[str]
+    payment_status: PaymentStatus
+    amount: Optional[Decimal] = None
+    currency: Optional[str] = None
+    error_message: Optional[str] = None
+    raw_payload: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class GatewayStatusResult:
+    """Result returned when directly querying payment status from the gateway."""
+    payment_order_id: str
+    payment_transaction_id: Optional[str]
+    payment_status: PaymentStatus
+    amount: Decimal
+    currency: str
+    raw_response: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class GatewayRefundResult:
+    """Result returned when issuing a refund through the gateway."""
+    is_successful: bool
+    refund_id: Optional[str]
+    amount_refunded: Decimal
+    payment_status: PaymentStatus
+    error_code: Optional[str] = None
+    error_message: Optional[str] = None
+    raw_response: Dict[str, Any] = field(default_factory=dict)
+
+
+class IPaymentGatewayService(ABC):
+    """
+    Abstract Payment Gateway Interface.
+    Implement this interface to connect Razorpay or any other payment provider.
+    """
+
+    @abstractmethod
+    def create_payment_order(
+        self,
+        order_id: str,
+        amount: Decimal,
+        currency: str,
+        notes: Optional[Dict[str, str]] = None
+    ) -> GatewayOrderResult:
+        """
+        Creates an order on the payment gateway (e.g. Razorpay Orders API).
+        
+        Args:
+            order_id: Internal KALA-MITRA order identifier.
+            amount: Payable amount in standard currency units (e.g., INR 499.00).
+            currency: ISO 4217 Currency code (e.g., 'INR').
+            notes: Additional metadata to attach to the gateway order.
+            
+        Returns:
+            GatewayOrderResult with payment_order_id and client checkout payload.
+        """
+        pass
+
+    @abstractmethod
+    def verify_payment(
+        self,
+        order_id: str,
+        payment_order_id: str,
+        payment_id: str,
+        signature: str
+    ) -> GatewayVerifyResult:
+        """
+        Cryptographically verifies the authenticity of a payment response
+        returned by the client checkout SDK.
+        
+        CRITICAL SECURITY REQUIREMENT:
+        Never trust client-reported success without verifying the HMAC-SHA256
+        signature against the gateway key secret on the server.
+        
+        Args:
+            order_id: Internal KALA-MITRA order ID.
+            payment_order_id: Gateway Order ID (e.g. 'order_xyz').
+            payment_id: Gateway Payment/Transaction ID (e.g. 'pay_abc').
+            signature: Cryptographic signature generated by the client SDK.
+            
+        Returns:
+            GatewayVerifyResult indicating is_valid and resulting PaymentStatus.
+        """
+        pass
+
+    @abstractmethod
+    def handle_webhook(
+        self,
+        raw_body: bytes,
+        headers: Dict[str, str]
+    ) -> GatewayWebhookResult:
+        """
+        Verifies the inbound webhook signature against raw bytes and extracts
+        the normalized payment event details.
+        
+        Args:
+            raw_body: Exact raw binary payload received in HTTP request.
+            headers: Request HTTP headers (must contain signature header).
+            
+        Returns:
+            GatewayWebhookResult with verified authenticity and event details.
+        """
+        pass
+
+    @abstractmethod
+    def get_payment_status(
+        self,
+        payment_order_id: str
+    ) -> GatewayStatusResult:
+        """
+        Directly queries the current payment status from the external gateway API.
+        
+        Args:
+            payment_order_id: Gateway Order ID to query.
+            
+        Returns:
+            GatewayStatusResult with current status and transaction info.
+        """
+        pass
+
+    @abstractmethod
+    def refund_payment(
+        self,
+        payment_transaction_id: str,
+        amount: Decimal,
+        reason: Optional[str] = None
+    ) -> GatewayRefundResult:
+        """
+        Initiates a partial or full refund for a settled transaction.
+        
+        Args:
+            payment_transaction_id: Gateway payment identifier (e.g. 'pay_abc').
+            amount: Amount to refund.
+            reason: Optional justification for the refund.
+            
+        Returns:
+            GatewayRefundResult with refund ID and success flag.
+        """
+        pass
